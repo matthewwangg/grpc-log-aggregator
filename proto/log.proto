@@ -1,0 +1,19 @@
+syntax='proto3';
+
+package log;
+
+message LogEntry {
+  string timestamp = 1;
+  string message = 2;
+  string level = 3;
+  string source = 4;
+  string hostname = 5;
+}
+
+message LogResponse {
+  bool success = 1;
+}
+
+service LogService {
+  rpc SendLog(LogEntry) returns (LogResponse);
+}
