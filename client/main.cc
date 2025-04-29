@@ -2,6 +2,7 @@
 #include <string>
 
 #include <grpcpp/grpcpp.h>
+#include <google/protobuf/timestamp.pb.h>
 
 #include "log.grpc.pb.h"
 #include "log.pb.h"
@@ -14,8 +15,12 @@ int main(int argc, char* argv[]) {
 
     grpc::ClientContext context;
 
+    google::protobuf::Timestamp ts;
+    auto now = std::chrono::system_clock::now();
+    ts.set_seconds(std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count());
+
     log::LogEntry request;
-    request.set_timestamp("2025-04-27T23:00:00Z");
+    *request.mutable_timestamp() = ts;
     request.set_message("Test log message");
     request.set_level("INFO");
     request.set_source("client-test");
