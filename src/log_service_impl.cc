@@ -1,32 +1,36 @@
 #include <filesystem>
 #include <fstream>
 
+#include <grpcpp/grpcpp.h>
+
+#include "log.grpc.pb.h"
 #include "log_service_impl.h"
+#include "utils/log_utils.h"
 #include "utils/time_utils.h"
 
 grpc::Status LogServiceImpl::SendLog(grpc::ServerContext* context, const log::LogEntry* request, log::LogResponse* response) {
-    std::filesystem::path directory = std::filesystem::path("log") / request->source();
-    std::filesystem::create_directories(directory);
+    grpc::Status status = log_utils::WriteLogEntryToFile(*request);
 
-    std::string day = time_utils::FormatDay(request->timestamp());
-    std::string time = time_utils::FormatTime(request->timestamp());
-
-    std::filesystem::path file_path = directory / (day + ".log");
-
-    std::ofstream out(file_path, std::ios::app);
-    if (out.is_open()) {
-        out << "[" << time << "] "
-            << "[" << request->level() << "] "
-            << "[" << request->source() << "] "
-            << "[" << request->hostname() << "] "
-            << request->message() << std::endl;
-        out.close();
-    } else {
-        std::cerr << "Failed to open log file!" << std::endl;
+    if (!status.ok()) {
         response->set_success(false);
-        return grpc::Status(grpc::StatusCode::INTERNAL, "Failed to open log file");
+        return status;
     }
 
     response->set_success(true);
     return grpc::Status::OK;
 }
+
+grpc::Status LogServiceImpl::StreamLog(grpc::ServerContext* context, grpc::ServerReader<log::LogEntry>* reader, log::LogResponse* response) {
+    log::LogEntry entry;
+    while (reader->Read(&entry)) {
+        grpc::Status status = log_utils::WriteLogEntryToFile(entry);
+        if (!status.ok()) {
+            response->set_success(false);
+            return status;
+        }
+    }
+
+    response->set_success(true);
+    return grpc::Status::OK;
+}
+

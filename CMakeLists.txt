@@ -11,6 +11,8 @@ set(PROTO_SRC
 set(SERVER_SRC
         src/main.cc
         src/log_service_impl.cc
+        src/utils/time_utils.cc
+        src/utils/log_utils.cc
 )
 
 add_executable(grpc_log_aggregator
