@@ -8,6 +8,7 @@
 class LogServiceImpl : public log::LogService::Service {
 public:
     grpc::Status SendLog(grpc::ServerContext* context, const log::LogEntry* request, log::LogResponse* response) override;
+    grpc::Status StreamLog(grpc::ServerContext* context, grpc::ServerReader<log::LogEntry>* reader, log::LogResponse* response) override;
 };
 
 
