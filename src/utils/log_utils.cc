@@ -21,18 +21,19 @@ grpc::Status WriteLogEntryToFile(const log::LogEntry& request) {
     std::filesystem::path file_path = directory / (day + ".log");
 
     std::ofstream out(file_path, std::ios::app);
-    if (out.is_open()) {
-        out << "[" << time << "] "
-            << "[" << request.level() << "] "
-            << "[" << request.source() << "] "
-            << "[" << request.hostname() << "] "
-            << request.message() << std::endl;
-        out.close();
-        return grpc::Status::OK;
-    } else {
+
+    if (!out.is_open()) {
         std::cerr << "Failed to open log file!" << std::endl;
         return grpc::Status(grpc::StatusCode::INTERNAL, "Failed to open log file");
     }
+
+    out << "[" << time << "] "
+        << "[" << request.level() << "] "
+        << "[" << request.source() << "] "
+        << "[" << request.hostname() << "] "
+        << request.message() << std::endl;
+    out.close();
+    return grpc::Status::OK;
 }
 
 } // namespace log_utils
