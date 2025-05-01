@@ -16,8 +16,19 @@ message LogResponse {
   bool success = 1;
 }
 
+message QueryRequest {
+  string keyword = 1;
+  string source = 2;
+}
+
+message QueryResponse {
+  repeated LogEntry entries = 1;
+}
+
 service LogService {
   rpc SendLog(LogEntry) returns (LogResponse);
 
   rpc StreamLog(stream LogEntry) returns (LogResponse);
+
+  rpc QueryLog(QueryRequest) returns (QueryResponse);
 }
