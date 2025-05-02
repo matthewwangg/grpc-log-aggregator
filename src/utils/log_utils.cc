@@ -44,7 +44,7 @@ bool ParseLogLine(const std::string& line, log::LogEntry& entry, const std::stri
     return true;
 }
 
-grpc::Status ReadLogFileToEntries(const std::filesystem::path& file_path, const std::string& keyword, const std::string& source_filter, std::vector<log::LogEntry>& entries) {
+grpc::Status ReadLogFileToEntries(const std::filesystem::path& file_path, const std::string& keyword, std::vector<log::LogEntry>& entries) {
     std::ifstream in(file_path);
     std::string date = file_path.stem().string();
 
@@ -57,6 +57,9 @@ grpc::Status ReadLogFileToEntries(const std::filesystem::path& file_path, const 
     while (std::getline(in, line)) {
         log::LogEntry entry;
         if (!ParseLogLine(line, entry, date)) {
+            continue;
+        }
+        if (!keyword.empty() && line.find(keyword) == std::string::npos) {
             continue;
         }
         entries.push_back(entry);
