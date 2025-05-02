@@ -7,9 +7,9 @@
 
 class LogServiceImpl : public log::LogService::Service {
 public:
+    grpc::Status QueryLog(grpc::ServerContext* context, const log::QueryRequest* request, log::QueryResponse* response);
     grpc::Status SendLog(grpc::ServerContext* context, const log::LogEntry* request, log::LogResponse* response) override;
     grpc::Status StreamLog(grpc::ServerContext* context, grpc::ServerReader<log::LogEntry>* reader, log::LogResponse* response) override;
 };
-
 
 #endif //GRPC_LOG_AGGREGATOR_LOG_SERVICE_IMPL_H
