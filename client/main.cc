@@ -7,6 +7,31 @@
 #include "log.grpc.pb.h"
 #include "log.pb.h"
 
+void ExampleQueryLog(std::shared_ptr<log::LogService::Stub> stub, std::unique_ptr<grpc::ClientContext> context) {
+    log::QueryRequest request;
+
+    request.set_source("client-test");
+    request.set_date("2025-04-29");
+    request.set_keyword("");
+
+    log::QueryResponse response;
+
+    grpc::Status status = stub->QueryLog(context.get(), request, &response);
+
+    if (status.ok()) {
+        std::cout << "QueryLog succeeded! Found " << response.entries_size() << " entries:\n";
+        for (const auto& entry : response.entries()) {
+            std::cout << "[" << entry.level() << "] "
+                      << entry.message() << " @ "
+                      << entry.timestamp().seconds() << " (host: "
+                      << entry.hostname() << ")\n";
+        }
+    } else {
+        std::cout << "QueryLog failed with error code: " << status.error_code()
+                  << ", message: " << status.error_message() << std::endl;
+    }
+}
+
 void ExampleSendLog(std::shared_ptr<log::LogService::Stub> stub, std::unique_ptr<grpc::ClientContext> context) {
     google::protobuf::Timestamp ts;
     auto now = std::chrono::system_clock::now();
@@ -75,4 +100,7 @@ int main(int argc, char* argv[]) {
 
     std::unique_ptr<grpc::ClientContext> stream_log_context = std::make_unique<grpc::ClientContext>();
     ExampleStreamLog(stub, std::move(stream_log_context));
+
+    std::unique_ptr<grpc::ClientContext> query_log_context = std::make_unique<grpc::ClientContext>();
+    ExampleQueryLog(stub, std::move(query_log_context));
 }
