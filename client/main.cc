@@ -96,11 +96,14 @@ int main(int argc, char* argv[]) {
     std::shared_ptr<log::LogService::Stub> stub = log::LogService::NewStub(channel);
 
     std::unique_ptr<grpc::ClientContext> send_log_context = std::make_unique<grpc::ClientContext>();
+    send_log_context->AddMetadata("authorization", std::getenv("LOG_SERVICE_API_KEY"));
     ExampleSendLog(stub, std::move(send_log_context));
 
     std::unique_ptr<grpc::ClientContext> stream_log_context = std::make_unique<grpc::ClientContext>();
+    stream_log_context->AddMetadata("authorization", std::getenv("LOG_SERVICE_API_KEY"));
     ExampleStreamLog(stub, std::move(stream_log_context));
 
     std::unique_ptr<grpc::ClientContext> query_log_context = std::make_unique<grpc::ClientContext>();
+    query_log_context->AddMetadata("authorization", std::getenv("LOG_SERVICE_API_KEY"));
     ExampleQueryLog(stub, std::move(query_log_context));
 }
