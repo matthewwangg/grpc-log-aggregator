@@ -48,7 +48,7 @@ grpc::Status ReadLogFileToEntries(const std::filesystem::path& file_path, const 
     std::ifstream in(file_path);
     std::string date = file_path.stem().string();
 
-    if (!in.is_open()) {
+    if (!in) {
         std::cerr << "Failed to open log file!" << std::endl;
         return grpc::Status(grpc::StatusCode::INTERNAL, "Failed to open log file");
     }
@@ -79,7 +79,7 @@ grpc::Status WriteLogEntryToFile(const log::LogEntry& request) {
 
     std::ofstream out(file_path, std::ios::app);
 
-    if (!out.is_open()) {
+    if (!out) {
         std::cerr << "Failed to open log file!" << std::endl;
         return grpc::Status(grpc::StatusCode::INTERNAL, "Failed to open log file");
     }
@@ -89,7 +89,6 @@ grpc::Status WriteLogEntryToFile(const log::LogEntry& request) {
         << "[" << request.source() << "] "
         << "[" << request.hostname() << "] "
         << request.message() << std::endl;
-    out.close();
 
     return grpc::Status::OK;
 }
