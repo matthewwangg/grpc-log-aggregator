@@ -5,11 +5,18 @@
 
 #include "log.grpc.pb.h"
 #include "log_service_impl.h"
+#include "utils/auth_utils.h"
 #include "utils/log_utils.h"
 #include "utils/time_utils.h"
 
 grpc::Status LogServiceImpl::QueryLog(grpc::ServerContext* context, const log::QueryRequest* request, log::QueryResponse* response) {
     std::cout << "[QueryLog] Received from: " << context->peer() << std::endl;
+
+    grpc::Status auth_status = auth_utils::CheckAuthorization(context);
+    if (!auth_status.ok()) {
+        std::cout << "[QueryLog] Failed to authenticate." << std::endl;
+        return auth_status;
+    }
 
     std::filesystem::path file_path = std::filesystem::path("log") / request->source() / (request->date() + ".log");
 
@@ -32,6 +39,12 @@ grpc::Status LogServiceImpl::QueryLog(grpc::ServerContext* context, const log::Q
 grpc::Status LogServiceImpl::SendLog(grpc::ServerContext* context, const log::LogEntry* request, log::LogResponse* response) {
     std::cout << "[SendLog] Received from: " << context->peer() << std::endl;
 
+    grpc::Status auth_status = auth_utils::CheckAuthorization(context);
+    if (!auth_status.ok()) {
+        std::cout << "[SendLog] Failed to authenticate." << std::endl;
+        return auth_status;
+    }
+
     grpc::Status status = log_utils::WriteLogEntryToFile(*request);
 
     if (!status.ok()) {
@@ -47,6 +60,13 @@ grpc::Status LogServiceImpl::SendLog(grpc::ServerContext* context, const log::Lo
 
 grpc::Status LogServiceImpl::StreamLog(grpc::ServerContext* context, grpc::ServerReader<log::LogEntry>* reader, log::LogResponse* response) {
     std::cout << "[StreamLog] Connected from: " << context->peer() << std::endl;
+
+    grpc::Status auth_status = auth_utils::CheckAuthorization(context);
+    if (!auth_status.ok()) {
+        std::cout << "[StreamLog] Failed to authenticate." << std::endl;
+        return auth_status;
+    }
+
     log::LogEntry entry;
     int count = 0;
 

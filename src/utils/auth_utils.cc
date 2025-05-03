@@ -1,8 +1,10 @@
 #include "utils/auth_utils.h"
 
+#include <grpcpp/grpcpp.h>
+
 namespace auth_utils {
 
-grpc::Status CheckAuthentication(const grpc::ServerContext* context) {
+grpc::Status CheckAuthorization(const grpc::ServerContext* context) {
     const char* expected_key = std::getenv("LOG_SERVICE_API_KEY");
 
     if (!expected_key) {
