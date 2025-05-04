@@ -86,3 +86,14 @@ grpc::Status LogServiceImpl::StreamLog(grpc::ServerContext* context, grpc::Serve
     return grpc::Status::OK;
 }
 
+grpc::Status LogServiceImpl::SubscribeLog(grpc::ServerContext* context, const log::QueryRequest* request, grpc::ServerWriter<log::LogEntry>* writer) {
+    std::cout << "[SubscribeLog] Connected from: " << context->peer() << std::endl;
+    
+    grpc::Status auth_status = auth_utils::CheckAuthorization(context);
+    if (!auth_status.ok()) {
+        std::cout << "[SubscribeLog] Failed to authenticate." << std::endl;
+        return auth_status;
+    }
+
+    return grpc::Status::OK;
+}
