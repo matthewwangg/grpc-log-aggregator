@@ -1,5 +1,8 @@
 #include <filesystem>
 #include <fstream>
+#include <memory>
+#include <queue>
+#include <string>
 
 #include <grpcpp/grpcpp.h>
 
@@ -7,6 +10,7 @@
 #include "log_service_impl.h"
 #include "utils/auth_utils.h"
 #include "utils/log_utils.h"
+#include "utils/pubsub_utils.h"
 #include "utils/time_utils.h"
 
 grpc::Status LogServiceImpl::QueryLog(grpc::ServerContext* context, const log::QueryRequest* request, log::QueryResponse* response) {
@@ -53,6 +57,8 @@ grpc::Status LogServiceImpl::SendLog(grpc::ServerContext* context, const log::Lo
         return status;
     }
 
+    pubsub_utils::LogPubSub::Instance().Publish(request->source(), request->message());
+
     std::cout << "[SendLog] Successfully wrote log." << std::endl;
     response->set_success(true);
     return grpc::Status::OK;
@@ -79,6 +85,8 @@ grpc::Status LogServiceImpl::StreamLog(grpc::ServerContext* context, grpc::Serve
             response->set_success(false);
             return status;
         }
+
+        pubsub_utils::LogPubSub::Instance().Publish(entry.source(), entry.message());
     }
 
     std::cout << "[StreamLog] Finished receiving " << count << " entries." << std::endl;
@@ -94,6 +102,9 @@ grpc::Status LogServiceImpl::SubscribeLog(grpc::ServerContext* context, const lo
         std::cout << "[SubscribeLog] Failed to authenticate." << std::endl;
         return auth_status;
     }
+
+    std::shared_ptr<std::queue<std::string>> queue = pubsub_utils::LogPubSub::Instance().Subscribe(request->source());
+    std::cout << "[SubscribeLog] Subscription successfully created." << std::endl;
 
     return grpc::Status::OK;
 }
