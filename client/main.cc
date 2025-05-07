@@ -19,12 +19,12 @@ void ExampleQueryLog(std::shared_ptr<log::LogService::Stub> stub, std::unique_pt
     grpc::Status status = stub->QueryLog(context.get(), request, &response);
 
     if (status.ok()) {
-        std::cout << "QueryLog succeeded! Found " << response.entries_size() << " entries:\n";
+        std::cout << "QueryLog succeeded! Found " << response.entries_size() << " entries:" << std::endl;
         for (const auto& entry : response.entries()) {
             std::cout << "[" << entry.level() << "] "
                       << entry.message() << " @ "
                       << entry.timestamp().seconds() << " (host: "
-                      << entry.hostname() << ")\n";
+                      << entry.hostname() << ")" << std::endl;
         }
     } else {
         std::cout << "QueryLog failed with error code: " << status.error_code()
@@ -89,6 +89,32 @@ void ExampleStreamLog(std::shared_ptr<log::LogService::Stub> stub, std::unique_p
     }
 }
 
+void ExampleSubscribeLog(std::shared_ptr<log::LogService::Stub> stub, std::unique_ptr<grpc::ClientContext> context) {
+    log::QueryRequest request;
+
+    request.set_source("client-test");
+
+    std::unique_ptr<grpc::ClientReader<log::LogEntry>> reader = stub->SubscribeLog(context.get(), request);
+
+    log::LogEntry entry;
+    std::cout << "Subscribed. Waiting for log entries..." << std::endl;
+
+    while (reader->Read(&entry)) {
+        std::cout << "[" << entry.level() << "] "
+                  << entry.message() << " @ "
+                  << entry.timestamp().seconds() << " (host: "
+                  << entry.hostname() << ")" << std::endl;
+    }
+
+    grpc::Status status = reader->Finish();
+    if (!status.ok()) {
+        std::cerr << "SubscribeLog failed with error code: " << status.error_code()
+                  << ", message: " << status.error_message() << std::endl;
+    } else {
+        std::cout << "SubscribeLog stream ended." << std::endl;
+    }
+}
+
 int main(int argc, char* argv[]) {
     std::string server_address = "127.0.0.1:50051";
     std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials());
@@ -106,4 +132,8 @@ int main(int argc, char* argv[]) {
     std::unique_ptr<grpc::ClientContext> query_log_context = std::make_unique<grpc::ClientContext>();
     query_log_context->AddMetadata("authorization", std::getenv("LOG_SERVICE_API_KEY"));
     ExampleQueryLog(stub, std::move(query_log_context));
+
+    std::unique_ptr<grpc::ClientContext> subscribe_log_context = std::make_unique<grpc::ClientContext>();
+    subscribe_log_context->AddMetadata("authorization", std::getenv("LOG_SERVICE_API_KEY"));
+    ExampleSubscribeLog(stub, std::move(subscribe_log_context));
 }

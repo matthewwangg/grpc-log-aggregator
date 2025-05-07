@@ -1,5 +1,8 @@
 #include <filesystem>
 #include <fstream>
+#include <memory>
+#include <queue>
+#include <string>
 
 #include <grpcpp/grpcpp.h>
 
@@ -7,6 +10,7 @@
 #include "log_service_impl.h"
 #include "utils/auth_utils.h"
 #include "utils/log_utils.h"
+#include "utils/pubsub_utils.h"
 #include "utils/time_utils.h"
 
 grpc::Status LogServiceImpl::QueryLog(grpc::ServerContext* context, const log::QueryRequest* request, log::QueryResponse* response) {
@@ -53,6 +57,8 @@ grpc::Status LogServiceImpl::SendLog(grpc::ServerContext* context, const log::Lo
         return status;
     }
 
+    pubsub_utils::LogPubSub::Instance().Publish(*request);
+
     std::cout << "[SendLog] Successfully wrote log." << std::endl;
     response->set_success(true);
     return grpc::Status::OK;
@@ -79,6 +85,8 @@ grpc::Status LogServiceImpl::StreamLog(grpc::ServerContext* context, grpc::Serve
             response->set_success(false);
             return status;
         }
+
+        pubsub_utils::LogPubSub::Instance().Publish(entry);
     }
 
     std::cout << "[StreamLog] Finished receiving " << count << " entries." << std::endl;
@@ -86,3 +94,39 @@ grpc::Status LogServiceImpl::StreamLog(grpc::ServerContext* context, grpc::Serve
     return grpc::Status::OK;
 }
 
+grpc::Status LogServiceImpl::SubscribeLog(grpc::ServerContext* context, const log::QueryRequest* request, grpc::ServerWriter<log::LogEntry>* writer) {
+    std::cout << "[SubscribeLog] Connected from: " << context->peer() << std::endl;
+
+    grpc::Status auth_status = auth_utils::CheckAuthorization(context);
+    if (!auth_status.ok()) {
+        std::cout << "[SubscribeLog] Failed to authenticate." << std::endl;
+        return auth_status;
+    }
+
+    std::shared_ptr<pubsub_utils::LogPubSub::SubscriberQueue> queue = pubsub_utils::LogPubSub::Instance().Subscribe(request->source());
+    std::cout << "[SubscribeLog] Subscription successfully created." << std::endl;
+
+    while (!context->IsCancelled()) {
+        std::unique_lock<std::mutex> lock(queue->mu_);
+
+        queue->cv_.wait(lock, [&] {
+            return !queue->entries_.empty() || context->IsCancelled();
+        });
+
+        while (!queue->entries_.empty()) {
+            log::LogEntry entry = queue->entries_.front();
+            queue->entries_.pop();
+
+            lock.unlock();
+
+            bool successful = writer->Write(entry);
+            if (!successful) {
+                break;
+            }
+
+            lock.lock();
+        }
+    }
+
+    return grpc::Status::OK;
+}

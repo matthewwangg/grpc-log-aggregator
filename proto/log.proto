@@ -32,4 +32,6 @@ service LogService {
   rpc StreamLog(stream LogEntry) returns (LogResponse);
 
   rpc QueryLog(QueryRequest) returns (QueryResponse);
+
+  rpc SubscribeLog(QueryRequest) returns (stream LogEntry);
 }
