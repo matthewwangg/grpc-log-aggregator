@@ -14,14 +14,14 @@ namespace pubsub_utils {
 class LogPubSub {
 public:
     struct SubscriberQueue {
-        std::queue<std::string> messages_;
+        std::queue<log::LogEntry> entries_;
         std::mutex mu_;
         std::condition_variable cv_;
     };
 
     static LogPubSub& Instance();
 
-    void Publish(const std::string& source, const std::string& message);
+    void Publish(const log::LogEntry& entry);
     std::shared_ptr<SubscriberQueue> Subscribe(const std::string& source);
 
 private:

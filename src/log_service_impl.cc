@@ -57,7 +57,7 @@ grpc::Status LogServiceImpl::SendLog(grpc::ServerContext* context, const log::Lo
         return status;
     }
 
-    pubsub_utils::LogPubSub::Instance().Publish(request->source(), request->message());
+    pubsub_utils::LogPubSub::Instance().Publish(*request);
 
     std::cout << "[SendLog] Successfully wrote log." << std::endl;
     response->set_success(true);
@@ -86,7 +86,7 @@ grpc::Status LogServiceImpl::StreamLog(grpc::ServerContext* context, grpc::Serve
             return status;
         }
 
-        pubsub_utils::LogPubSub::Instance().Publish(entry.source(), entry.message());
+        pubsub_utils::LogPubSub::Instance().Publish(entry);
     }
 
     std::cout << "[StreamLog] Finished receiving " << count << " entries." << std::endl;
@@ -96,7 +96,7 @@ grpc::Status LogServiceImpl::StreamLog(grpc::ServerContext* context, grpc::Serve
 
 grpc::Status LogServiceImpl::SubscribeLog(grpc::ServerContext* context, const log::QueryRequest* request, grpc::ServerWriter<log::LogEntry>* writer) {
     std::cout << "[SubscribeLog] Connected from: " << context->peer() << std::endl;
-    
+
     grpc::Status auth_status = auth_utils::CheckAuthorization(context);
     if (!auth_status.ok()) {
         std::cout << "[SubscribeLog] Failed to authenticate." << std::endl;
