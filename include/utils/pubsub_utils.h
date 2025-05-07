@@ -1,6 +1,7 @@
 #ifndef GRPC_LOG_AGGREGATOR_PUBSUB_UTILS_H
 #define GRPC_LOG_AGGREGATOR_PUBSUB_UTILS_H
 
+#include <condition_variable>
 #include <memory>
 #include <mutex>
 #include <queue>
@@ -12,16 +13,22 @@ namespace pubsub_utils {
 
 class LogPubSub {
 public:
+    struct SubscriberQueue {
+        std::queue<std::string> messages_;
+        std::mutex mu_;
+        std::condition_variable cv_;
+    };
+
     static LogPubSub& Instance();
 
     void Publish(const std::string& source, const std::string& message);
-    std::shared_ptr<std::queue<std::string>> Subscribe(const std::string& source);
+    std::shared_ptr<SubscriberQueue> Subscribe(const std::string& source);
 
 private:
     LogPubSub() = default;
 
     std::mutex mu_;
-    std::unordered_map<std::string, std::vector<std::shared_ptr<std::queue<std::string>>>> subscribers_;
+    std::unordered_map<std::string, std::vector<std::shared_ptr<SubscriberQueue>>> subscribers_;
 };
 
 } // namespace pubsub_utils

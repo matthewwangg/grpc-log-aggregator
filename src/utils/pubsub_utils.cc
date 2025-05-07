@@ -2,7 +2,6 @@
 
 #include <memory>
 #include <mutex>
-#include <queue>
 #include <string>
 
 namespace pubsub_utils {
@@ -13,20 +12,22 @@ LogPubSub& LogPubSub::Instance() {
 }
 
 void LogPubSub::Publish(const std::string& source, const std::string& message) {
-    mu_.lock();
+    std::lock_guard<std::mutex> lock(mu_);
     auto& queues = subscribers_[source];
     for(auto queue : queues) {
-        queue->push(message);
+        {
+            std::lock_guard<std::mutex> q_lock(queue->mu_);
+            queue->messages_.push(message);
+        }
+        queue->cv_.notify_one();
     }
-    mu_.unlock();
 }
 
-std::shared_ptr<std::queue<std::string>> LogPubSub::Subscribe(const std::string& source) {
-    auto queue = std::make_shared<std::queue<std::string>>();
+std::shared_ptr<LogPubSub::SubscriberQueue> LogPubSub::Subscribe(const std::string& source) {
+    auto queue = std::make_shared<LogPubSub::SubscriberQueue>();
 
-    mu_.lock();
+    std::lock_guard<std::mutex> lock(mu_);
     subscribers_[source].push_back(queue);
-    mu_.unlock();
 
     return queue;
 }
