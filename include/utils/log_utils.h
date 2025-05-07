@@ -10,9 +10,9 @@
 
 namespace log_utils {
 
-bool ParseLogLine(const std::string& line, log::LogEntry& entry, const std::string& date);
-grpc::Status ReadLogFileToEntries(const std::filesystem::path& file_path, const std::string& keyword, std::vector<log::LogEntry>& entries);
-grpc::Status WriteLogEntryToFile(const log::LogEntry& entry);
+bool ParseLogLine(const std::string& line, logging::LogEntry& entry, const std::string& date);
+grpc::Status ReadLogFileToEntries(const std::filesystem::path& file_path, const std::string& keyword, std::vector<logging::LogEntry>& entries);
+grpc::Status WriteLogEntryToFile(const logging::LogEntry& entry);
 
 } // namespace log_utils
 

@@ -13,7 +13,7 @@
 
 namespace log_utils {
 
-bool ParseLogLine(const std::string& line, log::LogEntry& entry, const std::string& date) {
+bool ParseLogLine(const std::string& line, logging::LogEntry& entry, const std::string& date) {
     size_t p1 = line.find(']');
     size_t p2 = line.find(']', p1 + 1);
     size_t p3 = line.find(']', p2 + 1);
@@ -44,7 +44,7 @@ bool ParseLogLine(const std::string& line, log::LogEntry& entry, const std::stri
     return true;
 }
 
-grpc::Status ReadLogFileToEntries(const std::filesystem::path& file_path, const std::string& keyword, std::vector<log::LogEntry>& entries) {
+grpc::Status ReadLogFileToEntries(const std::filesystem::path& file_path, const std::string& keyword, std::vector<logging::LogEntry>& entries) {
     std::ifstream in(file_path);
     std::string date = file_path.stem().string();
 
@@ -55,7 +55,7 @@ grpc::Status ReadLogFileToEntries(const std::filesystem::path& file_path, const 
 
     std::string line;
     while (std::getline(in, line)) {
-        log::LogEntry entry;
+        logging::LogEntry entry;
         if (!ParseLogLine(line, entry, date)) {
             continue;
         }
@@ -68,7 +68,7 @@ grpc::Status ReadLogFileToEntries(const std::filesystem::path& file_path, const 
     return grpc::Status::OK;
 }
 
-grpc::Status WriteLogEntryToFile(const log::LogEntry& request) {
+grpc::Status WriteLogEntryToFile(const logging::LogEntry& request) {
     std::filesystem::path directory = std::filesystem::path("log") / request.source();
     std::filesystem::create_directories(directory);
 

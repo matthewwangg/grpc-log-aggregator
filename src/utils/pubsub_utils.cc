@@ -13,7 +13,7 @@ LogPubSub& LogPubSub::Instance() {
     return instance;
 }
 
-void LogPubSub::Publish(const log::LogEntry& entry) {
+void LogPubSub::Publish(const logging::LogEntry& entry) {
     std::lock_guard<std::mutex> lock(mu_);
     auto& queues = subscribers_[entry.source()];
     for(auto queue : queues) {

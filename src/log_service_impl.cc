@@ -13,7 +13,7 @@
 #include "utils/pubsub_utils.h"
 #include "utils/time_utils.h"
 
-grpc::Status LogServiceImpl::QueryLog(grpc::ServerContext* context, const log::QueryRequest* request, log::QueryResponse* response) {
+grpc::Status LogServiceImpl::QueryLog(grpc::ServerContext* context, const logging::QueryRequest* request, logging::QueryResponse* response) {
     std::cout << "[QueryLog] Received from: " << context->peer() << std::endl;
 
     grpc::Status auth_status = auth_utils::CheckAuthorization(context);
@@ -24,7 +24,7 @@ grpc::Status LogServiceImpl::QueryLog(grpc::ServerContext* context, const log::Q
 
     std::filesystem::path file_path = std::filesystem::path("log") / request->source() / (request->date() + ".log");
 
-    std::vector<log::LogEntry> entries;
+    std::vector<logging::LogEntry> entries;
     grpc::Status status = log_utils::ReadLogFileToEntries(file_path, request->keyword(), entries);
 
     if (!status.ok()) {
@@ -40,7 +40,7 @@ grpc::Status LogServiceImpl::QueryLog(grpc::ServerContext* context, const log::Q
     return grpc::Status::OK;
 }
 
-grpc::Status LogServiceImpl::SendLog(grpc::ServerContext* context, const log::LogEntry* request, log::LogResponse* response) {
+grpc::Status LogServiceImpl::SendLog(grpc::ServerContext* context, const logging::LogEntry* request, logging::LogResponse* response) {
     std::cout << "[SendLog] Received from: " << context->peer() << std::endl;
 
     grpc::Status auth_status = auth_utils::CheckAuthorization(context);
@@ -64,7 +64,7 @@ grpc::Status LogServiceImpl::SendLog(grpc::ServerContext* context, const log::Lo
     return grpc::Status::OK;
 }
 
-grpc::Status LogServiceImpl::StreamLog(grpc::ServerContext* context, grpc::ServerReader<log::LogEntry>* reader, log::LogResponse* response) {
+grpc::Status LogServiceImpl::StreamLog(grpc::ServerContext* context, grpc::ServerReader<logging::LogEntry>* reader, logging::LogResponse* response) {
     std::cout << "[StreamLog] Connected from: " << context->peer() << std::endl;
 
     grpc::Status auth_status = auth_utils::CheckAuthorization(context);
@@ -73,7 +73,7 @@ grpc::Status LogServiceImpl::StreamLog(grpc::ServerContext* context, grpc::Serve
         return auth_status;
     }
 
-    log::LogEntry entry;
+    logging::LogEntry entry;
     int count = 0;
 
     while (reader->Read(&entry)) {
@@ -94,7 +94,7 @@ grpc::Status LogServiceImpl::StreamLog(grpc::ServerContext* context, grpc::Serve
     return grpc::Status::OK;
 }
 
-grpc::Status LogServiceImpl::SubscribeLog(grpc::ServerContext* context, const log::QueryRequest* request, grpc::ServerWriter<log::LogEntry>* writer) {
+grpc::Status LogServiceImpl::SubscribeLog(grpc::ServerContext* context, const logging::QueryRequest* request, grpc::ServerWriter<logging::LogEntry>* writer) {
     std::cout << "[SubscribeLog] Connected from: " << context->peer() << std::endl;
 
     grpc::Status auth_status = auth_utils::CheckAuthorization(context);
@@ -114,7 +114,7 @@ grpc::Status LogServiceImpl::SubscribeLog(grpc::ServerContext* context, const lo
         });
 
         while (!queue->entries_.empty()) {
-            log::LogEntry entry = queue->entries_.front();
+            logging::LogEntry entry = queue->entries_.front();
             queue->entries_.pop();
 
             lock.unlock();
