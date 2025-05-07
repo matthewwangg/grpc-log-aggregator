@@ -4,6 +4,8 @@
 #include <mutex>
 #include <string>
 
+#include "log.pb.h"
+
 namespace pubsub_utils {
 
 LogPubSub& LogPubSub::Instance() {
@@ -13,7 +15,7 @@ LogPubSub& LogPubSub::Instance() {
 
 void LogPubSub::Publish(const log::LogEntry& entry) {
     std::lock_guard<std::mutex> lock(mu_);
-    auto& queues = subscribers_[entry.source];
+    auto& queues = subscribers_[entry.source()];
     for(auto queue : queues) {
         {
             std::lock_guard<std::mutex> q_lock(queue->mu_);

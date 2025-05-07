@@ -9,6 +9,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "log.pb.h"
+
 namespace pubsub_utils {
 
 class LogPubSub {
