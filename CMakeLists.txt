@@ -13,6 +13,8 @@ set(SERVER_SRC
         src/log_service_impl.cc
         src/utils/time_utils.cc
         src/utils/log_utils.cc
+        src/utils/auth_utils.cc
+        src/utils/pubsub_utils.cc
 )
 
 add_executable(grpc_log_aggregator
@@ -26,5 +28,7 @@ target_link_libraries(grpc_log_aggregator
         grpc++
         grpc
         protobuf
+        gpr
+        absl_synchronization
 )
 
