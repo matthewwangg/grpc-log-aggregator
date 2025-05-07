@@ -103,8 +103,30 @@ grpc::Status LogServiceImpl::SubscribeLog(grpc::ServerContext* context, const lo
         return auth_status;
     }
 
-    std::shared_ptr<std::queue<std::string>> queue = pubsub_utils::LogPubSub::Instance().Subscribe(request->source());
+    std::shared_ptr<pubsub_utils::LogPubSub::SubscriberQueue> queue = pubsub_utils::LogPubSub::Instance().Subscribe(request->source());
     std::cout << "[SubscribeLog] Subscription successfully created." << std::endl;
+
+    while (!context->IsCancelled()) {
+        std::unique_lock<std::mutex> lock(queue->mu_);
+
+        queue->cv_.wait(lock, [&] {
+            return !queue->entries_.empty() || context->IsCancelled();
+        });
+
+        while (!queue->entries_.empty()) {
+            log::LogEntry entry = queue->entries_.front();
+            queue->entries_.pop();
+
+            lock.unlock();
+
+            bool successful = writer->Write(entry);
+            if (!successful) {
+                break;
+            }
+
+            lock.lock();
+        }
+    }
 
     return grpc::Status::OK;
 }
