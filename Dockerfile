@@ -12,7 +12,16 @@ COPY . .
 
 RUN ./build.sh
 
-WORKDIR /grpc_log_aggregator/build
+FROM ubuntu:24.04
+
+RUN apt-get update && apt-get install -y \
+    libprotobuf-dev \
+    libgrpc++-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /grpc_log_aggregator
+
+COPY --from=builder /grpc_log_aggregator/build/grpc_log_aggregator .
 
 EXPOSE 50051
 
