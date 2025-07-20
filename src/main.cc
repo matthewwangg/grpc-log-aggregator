@@ -10,14 +10,20 @@
 int main(int argc, char* argv[]) {
     grpc::ServerBuilder builder;
 
+    if (argc != 2) {
+        std::cout << "usage: " << argv[0] << " <address>" << std::endl;
+        return 1;
+    }
+
+    std::string address_url = argv[1];
+
     LogServiceImpl log_service;
     builder.RegisterService(&log_service);
 
-    std::string address_url = "0.0.0.0:50051";
     builder.AddListeningPort(address_url, grpc::InsecureServerCredentials());
 
     std::unique_ptr<grpc::Server> server = builder.BuildAndStart();
-    std::cout << "Server listening on " << address_url << std::endl;
+    std::cout << "server listening on " << address_url << std::endl;
 
     server->Wait();
 }
