@@ -11,6 +11,7 @@
 #include "utils/auth_utils.h"
 #include "utils/log_utils.h"
 #include "utils/pubsub_utils.h"
+#include "utils/thread_utils.h"
 #include "utils/time_utils.h"
 
 LogServiceImpl::LogServiceImpl(LogServiceImpl::LogMode mode)
@@ -53,17 +54,29 @@ grpc::Status LogServiceImpl::SendLog(grpc::ServerContext* context, const logging
         return auth_status;
     }
 
-    grpc::Status status = log_utils::WriteLogEntryToFile(*request);
+    if (mode_ == LogMode::ASYNC) {
+        logging::LogEntry entry = *request;
+        thread_utils::AsyncExecute([entry]() {
+            grpc::Status status = log_utils::WriteLogEntryToFile(entry);
+            if (!status.ok()) {
+                std::cout << "[SendLog] Failed to write log." << std::endl;
+            }
+            pubsub_utils::LogPubSub::Instance().Publish(entry);
+            std::cout << "[SendLog] Successfully wrote log." << std::endl;
+        });
+    } else {
+        grpc::Status status = log_utils::WriteLogEntryToFile(*request);
 
-    if (!status.ok()) {
-        std::cout << "[SendLog] Failed to write log." << std::endl;
-        response->set_success(false);
-        return status;
+        if (!status.ok()) {
+            std::cout << "[SendLog] Failed to write log." << std::endl;
+            response->set_success(false);
+            return status;
+        }
+
+        pubsub_utils::LogPubSub::Instance().Publish(*request);
+        std::cout << "[SendLog] Successfully wrote log." << std::endl;
     }
 
-    pubsub_utils::LogPubSub::Instance().Publish(*request);
-
-    std::cout << "[SendLog] Successfully wrote log." << std::endl;
     response->set_success(true);
     return grpc::Status::OK;
 }
@@ -81,16 +94,30 @@ grpc::Status LogServiceImpl::StreamLog(grpc::ServerContext* context, grpc::Serve
     int count = 0;
 
     while (reader->Read(&entry)) {
-        std::cout << "[StreamLog] Entry " << ++count << " written!" << std::endl;
-        grpc::Status status = log_utils::WriteLogEntryToFile(entry);
+        count++;
+        if (mode_ == LogMode::ASYNC) {
+            logging::LogEntry captured_entry = entry;
+            int captured_count = count;
+            thread_utils::AsyncExecute([captured_entry, captured_count]() {
+                grpc::Status status = log_utils::WriteLogEntryToFile(captured_entry);
+                if (!status.ok()) {
+                    std::cout << "[StreamLog] Failed to write log." << std::endl;
+                }
+                pubsub_utils::LogPubSub::Instance().Publish(captured_entry);
+                std::cout << "[StreamLog] Entry " << captured_count << " written!" << std::endl;
+            });
+        } else {
+            grpc::Status status = log_utils::WriteLogEntryToFile(entry);
 
-        if (!status.ok()) {
-            std::cout << "[StreamLog] Failed to write log." << std::endl;
-            response->set_success(false);
-            return status;
+            if (!status.ok()) {
+                std::cout << "[StreamLog] Failed to write log." << std::endl;
+                response->set_success(false);
+                return status;
+            }
+
+            pubsub_utils::LogPubSub::Instance().Publish(entry);
+            std::cout << "[StreamLog] Entry " << count << " written!" << std::endl;
         }
-
-        pubsub_utils::LogPubSub::Instance().Publish(entry);
     }
 
     std::cout << "[StreamLog] Finished receiving " << count << " entries." << std::endl;
