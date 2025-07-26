@@ -15,6 +15,7 @@ set(SERVER_SRC
         src/utils/log_utils.cc
         src/utils/auth_utils.cc
         src/utils/pubsub_utils.cc
+        src/utils/thread_utils.cc
 )
 
 add_executable(grpc_log_aggregator
