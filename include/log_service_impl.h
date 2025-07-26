@@ -14,7 +14,7 @@ public:
 
     LogServiceImpl(LogMode mode);
 
-    grpc::Status QueryLog(grpc::ServerContext* context, const logging::QueryRequest* request, logging::QueryResponse* response);
+    grpc::Status QueryLog(grpc::ServerContext* context, const logging::QueryRequest* request, logging::QueryResponse* response) override;
     grpc::Status SendLog(grpc::ServerContext* context, const logging::LogEntry* request, logging::LogResponse* response) override;
     grpc::Status StreamLog(grpc::ServerContext* context, grpc::ServerReader<logging::LogEntry>* reader, logging::LogResponse* response) override;
     grpc::Status SubscribeLog(grpc::ServerContext* context, const logging::QueryRequest* request, grpc::ServerWriter<logging::LogEntry>* writer) override;
