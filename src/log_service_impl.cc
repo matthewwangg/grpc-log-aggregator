@@ -13,6 +13,10 @@
 #include "utils/pubsub_utils.h"
 #include "utils/time_utils.h"
 
+LogServiceImpl::LogServiceImpl(LogServiceImpl::LogMode mode)
+    : mode_(mode)
+{}
+
 grpc::Status LogServiceImpl::QueryLog(grpc::ServerContext* context, const logging::QueryRequest* request, logging::QueryResponse* response) {
     std::cout << "[QueryLog] Received from: " << context->peer() << std::endl;
 
