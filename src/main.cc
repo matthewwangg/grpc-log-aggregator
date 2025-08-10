@@ -10,22 +10,23 @@
 int main(int argc, char* argv[]) {
     grpc::ServerBuilder builder;
 
-    if (argc != 3) {
-        std::cout << "usage: " << argv[0] << " <address> <sync/async>" << std::endl;
-        return 1;
-    }
+    const char* portEnvironmentVariable = std::getenv("PORT");
+    std::string port = portEnvironmentVariable ? portEnvironmentVariable : "50051";
+    std::string address_url = "0.0.0.0:" + port;
+    LogServiceImpl::LogMode mode = LogServiceImpl::LogMode::ASYNC;
 
-    std::string address_url = argv[1];
-    std::string mode_string = argv[2];
-    LogServiceImpl::LogMode mode;
+    if (argc == 3) {
+        address_url = argv[1];
+        std::string mode_string = argv[2];
 
-    if (mode_string == "async") {
-        mode = LogServiceImpl::LogMode::ASYNC;
-    } else if (mode_string == "sync") {
-        mode = LogServiceImpl::LogMode::SYNC;
-    } else {
-        std::cout << "usage: " << argv[0] << " <address> <sync/async>" << std::endl;
-        return 1;
+        if (mode_string == "async") {
+            mode = LogServiceImpl::LogMode::ASYNC;
+        } else if (mode_string == "sync") {
+            mode = LogServiceImpl::LogMode::SYNC;
+        } else {
+            std::cout << "usage: " << argv[0] << " <address> <sync/async>" << std::endl;
+            return 1;
+        }
     }
 
     LogServiceImpl log_service(mode);
