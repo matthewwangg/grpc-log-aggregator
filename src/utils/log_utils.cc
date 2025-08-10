@@ -69,7 +69,7 @@ grpc::Status ReadLogFileToEntries(const std::filesystem::path& file_path, const 
 }
 
 grpc::Status WriteLogEntryToFile(const logging::LogEntry& request) {
-    std::filesystem::path directory = std::filesystem::path("log") / request.source();
+    std::filesystem::path directory = std::filesystem::path("/logs") / request.source();
     std::filesystem::create_directories(directory);
 
     std::string day = time_utils::FormatDay(request.timestamp());

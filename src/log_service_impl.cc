@@ -27,7 +27,7 @@ grpc::Status LogServiceImpl::QueryLog(grpc::ServerContext* context, const loggin
         return auth_status;
     }
 
-    std::filesystem::path file_path = std::filesystem::path("log") / request->source() / (request->date() + ".log");
+    std::filesystem::path file_path = std::filesystem::path("/logs") / request->source() / (request->date() + ".log");
 
     std::vector<logging::LogEntry> entries;
     grpc::Status status = log_utils::ReadLogFileToEntries(file_path, request->keyword(), entries);
