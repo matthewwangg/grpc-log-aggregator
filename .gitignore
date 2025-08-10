@@ -50,3 +50,9 @@ Makefile
 
 # IDE
 /.idea
+
+# CMake
+/cmake-build-debug
+
+# .env
+.env
