@@ -2,13 +2,25 @@
 
 A high-performance log aggregation server built with C++20 and gRPC. This project supports log ingestion, querying, streaming, and real-time subscription using a defined Protobuf schema.
 
-## Features
+## API Description
 
-- ✅ **SendLog**: Send individual log entries
-- 📤 **StreamLog**: Stream logs in batches
-- 🔍 **QueryLog**: Search logs by source, date, and optional keyword
-- 🔔 **SubscribeLog**: Real-time streaming of new logs via pub/sub
-- 📁 Logs are saved to disk under `log/<source>/<YYYY-MM-DD>.log`
+- **SendLog**: Send individual log entries
+- **StreamLog**: Stream logs in batches
+- **QueryLog**: Search logs by source, date, and optional keyword
+- **SubscribeLog**: Real-time streaming of new logs via pub/sub
+
+## Protobuf API Definition
+
+Defined in `proto/log.proto`:
+
+- `SendLog(LogEntry) → LogResponse`
+- `StreamLog(stream LogEntry) → LogResponse`
+- `QueryLog(QueryRequest) → QueryResponse`
+- `SubscribeLog(SubscribeRequest) → stream LogEntry`
+
+## Storage
+- Logs are saved to disk under `logs/<source>/<YYYY-MM-DD>.log`
+- GCS buckets are supported.
 
 ## Requirements
 
@@ -57,15 +69,6 @@ grpc-log-aggregator/
 ├── build.sh                # Build automation script for server
 ├── CMakeLists.txt          # Build configuration
 ```
-
-## Protobuf API
-
-Defined in `proto/log.proto`:
-
-- `SendLog(LogEntry) → LogResponse`
-- `StreamLog(stream LogEntry) → LogResponse`
-- `QueryLog(QueryRequest) → QueryResponse`
-- `SubscribeLog(SubscribeRequest) → stream LogEntry`
 
 ## License
 
